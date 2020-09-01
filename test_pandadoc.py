@@ -7,6 +7,8 @@ from .pandarecipient import Pandarecipient
 
 
 TEST_TEMPLATE_UUID = os.environ.get('TEST_TEMPLATE_UUID', 'ZXYzyxsX2Hrnug6FgrYX4d')
+TEST_FOLDER_UUID = os.environ.get('TEST_FOLDER_UUID', 'ABCzyxsX2Hrnug6FgrYX4d')
+
 TEST_TEMPLATE_DELETE_UUID = os.environ.get('TEST_TEMPLATE_DELETE_UUID', 'ZYxyzeyXdTHHxCV5K5PoQH')
 # TEST_FOLDER_DELETE_UUID = os.environ.get('TEST_TEMPLATE_DELETE_UUID', 'a7y3zgpmk3cfmMryEJxaRM')
 
@@ -18,13 +20,13 @@ def pandadoc():
 @pytest.fixture
 def recipients():
     employee = Pandarecipient(
-        email='fastinetserver@gmail.com',
+        email='employee@example.com',
         first_name='Kos',
         last_name='Smarty',
         role='Employee',
     )
     employer = Pandarecipient(
-        email='kos@zxscript.com',
+        email='employer@example.com',
         first_name='Kos',
         last_name='Ovechko',
         role='Employer',
@@ -43,8 +45,8 @@ def a_pandadocument(pandadoc, recipients):
 
 def test_document_create_in_folder(pandadoc, recipients):
     document = pandadoc.documents.create(
-        template_uuid="Cu2NZisX2Hrnug6FgrYX4d",
-        folder_uuid="6SoNkr3e6FiCMA8KsVbQZ8",
+        template_uuid=TEST_TEMPLATE_UUID,
+        folder_uuid=TEST_FOLDER_UUID,
         recipients=recipients,
         name="Test Document in Folder",
     )
