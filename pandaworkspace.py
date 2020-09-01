@@ -8,16 +8,16 @@ from .pandadocument import PandaDocumentAbstract
 from .pandafolder import PandaFolder
 from .pandatemplate import PandaTemplateAbstract
 
-DEFAULT_PANDADOC_API_KEY = os.environ.get('DEFAULT_PANDADOC_API_KEY', 'put-your-key-here')
+DEFAULT_PANDAWORKSPACE_API_KEY = os.environ.get('DEFAULT_PANDAWORKSPACE_API_KEY', 'put-your-key-here')
 DEFAULT_PANDADOC_BASE_API_URL = os.environ.get('DEFAULT_PANDADOC_BASE_API_URL', 'https://api.pandadoc.com/public/v1/')
 DEFAULT_PANDADOC_BASE_APP_URL = os.environ.get('DEFAULT_PANDADOC_BASE_APP_URL', 'https://app.pandadoc.com/')
 DEFAULT_PANDADOC_DOWNLOAD_FOLDER = os.environ.get('DEFAULT_PANDADOC_DOWNLOAD_FOLDER', './pandadoc_docs')
 DEFAULT_RANDOM_FILENAME_LENGTH = int(os.environ.get('DEFAULT_RANDOM_FILENAME_LENGTH', '20'))
 
 
-class PandaDoc:
+class PandaWorkspace:
     def __init__(self, request_limit_manager=NoLimitRequestLimitManager):
-        self.__api_key = DEFAULT_PANDADOC_API_KEY
+        self.__api_key = DEFAULT_PANDAWORKSPACE_API_KEY
         self.__base_api_url = DEFAULT_PANDADOC_BASE_API_URL
         self.__base_app_url = DEFAULT_PANDADOC_BASE_APP_URL
         self.__download_folder = DEFAULT_PANDADOC_DOWNLOAD_FOLDER

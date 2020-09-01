@@ -2,7 +2,7 @@ import os
 import re
 
 import pytest
-from .pandadoc import PandaDoc
+from .pandaworkspace import PandaWorkspace
 from .pandarecipient import Pandarecipient
 
 
@@ -14,7 +14,7 @@ TEST_TEMPLATE_DELETE_UUID = os.environ.get('TEST_TEMPLATE_DELETE_UUID', 'ZYxyzey
 
 @pytest.fixture
 def pandadoc():
-    return PandaDoc()
+    return PandaWorkspace()
 
 
 @pytest.fixture

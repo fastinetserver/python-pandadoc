@@ -13,7 +13,7 @@ class PandaFolder(ABC):
 
     def __init__(self, uuid: str = None, name: str = None, date_created: str = None):
         """
-        :type pandadoc: pandadoc
+        :type pandadoc: pandaworkspace
         """
         if uuid is None:
             raise FolderUuidRequired()
