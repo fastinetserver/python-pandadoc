@@ -14,7 +14,7 @@ import random
 import requests
 
 from .panda_exceptions import ApiException
-from .sleep_request_limit_manager import SleepRequestLimitManager
+from .request_limit_manager import SleepRequestLimitManager
 from .pandadocument import PandaDocumentAbstract
 from .pandafolder import PandaFolder
 from .pandatemplate import PandaTemplateAbstract

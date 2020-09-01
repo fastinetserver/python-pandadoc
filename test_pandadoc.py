@@ -13,7 +13,7 @@ import re
 
 import pytest
 
-from .sleep_request_limit_manager import SleepRequestLimitManager
+from .request_limit_manager import SleepRequestLimitManager
 from .pandaworkspace import PandaWorkspace
 from .pandarecipient import Pandarecipient
 

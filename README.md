@@ -13,7 +13,7 @@ from pandarecipient import Pandarecipient
 # workspace = PandaWorkspace(request_limit_manager=DjangoMemcachedRequestLimitManager)
 
 # otherwise we can use a simple sleep limit manager which should work for a single threaded application
-from sleep_request_limit_manager import SleepRequestLimitManager
+from request_limit_manager import SleepRequestLimitManager
 
 
 workspace = PandaWorkspace(request_limit_manager=SleepRequestLimitManager)

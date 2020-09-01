@@ -1,4 +1,7 @@
-"""pandadocument.py implements a AbstractRequestLimitManager and NoLimitRequestLimitManager
+"""pandadocument.py implements basic Request Limit Managers:
+ - AbstractRequestLimitManager
+ - NoLimitRequestLimitManager
+ - SleepRequestLimitManager
  More about limits can be found here https://developers.pandadoc.com/reference#limits"""
 
 __author__ = "Kostyantyn Ovechko"
@@ -9,6 +12,7 @@ __email__ = "kos@zxscript.com"
 __status__ = "Production"
 
 
+from time import sleep
 from abc import ABC, abstractmethod
 
 
@@ -51,3 +55,13 @@ class NoLimitRequestLimitManager(AbstractRequestLimitManager):
     def get_request_permission(self):
         return True
 
+
+class SleepRequestLimitManager(AbstractRequestLimitManager):
+    """ 6 seconds should produce less than 10 requests per minutes, which should be ok for sandbox
+    When calling from a single thread we can limit number of requests by just adding a delay between them."""
+    __limiting_delay_seconds = 6
+
+    def get_request_permission(self):
+        print("Waiting for {retry_delay} seconds...".format(retry_delay=self.__class__.__limiting_delay_seconds))
+        sleep(self.__class__.__limiting_delay_seconds)
+        return True
