@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import List, Dict
 
-from .panda_exceptions import ApiError
+from .panda_exceptions import ApiException
 
 
 class TemplateIdRequiredException(Exception):
@@ -59,16 +59,16 @@ class PandaTemplateAbstract(ABC):
         if folder_uuid:
             data['folder_uuid'] = folder_uuid
 
-        response = cls._pandadoc.get('templates', data=data)
+        response = cls._pandaworkspace.get('templates', data=data)
         if response.status_code != 200:
-            raise ApiError(response.text)
+            raise ApiException(response.text)
         results = response.json().get('results')
         return results
 
     def details(self) -> Dict:
-        response = self.__class__._pandadoc.get('templates/{template_id}/details'.format(template_id=self.id))
+        response = self.__class__._pandaworkspace.get('templates/{template_id}/details'.format(template_id=self.id))
         return response.json()
 
     def delete(self) -> int:
-        response = self.__class__._pandadoc.delete('templates/{template_id}'.format(template_id=self.id))
+        response = self.__class__._pandaworkspace.delete('templates/{template_id}'.format(template_id=self.id))
         return response.status_code

@@ -1,9 +1,11 @@
+import inspect
 import os
 import string
 import random
 import requests
 
-from .request_limit_manager import NoLimitRequestLimitManager
+from .panda_exceptions import ApiException
+from .sleep_request_limit_manager import SleepRequestLimitManager
 from .pandadocument import PandaDocumentAbstract
 from .pandafolder import PandaFolder
 from .pandatemplate import PandaTemplateAbstract
@@ -15,8 +17,11 @@ DEFAULT_PANDADOC_DOWNLOAD_FOLDER = os.environ.get('DEFAULT_PANDADOC_DOWNLOAD_FOL
 DEFAULT_RANDOM_FILENAME_LENGTH = int(os.environ.get('DEFAULT_RANDOM_FILENAME_LENGTH', '20'))
 
 
+API_RESPONSE_SUCCESSFUL_STATUS_CODES = {200, 201, 204}
+
+
 class PandaWorkspace:
-    def __init__(self, request_limit_manager=NoLimitRequestLimitManager):
+    def __init__(self, request_limit_manager=SleepRequestLimitManager):
         self.__api_key = DEFAULT_PANDAWORKSPACE_API_KEY
         self.__base_api_url = DEFAULT_PANDADOC_BASE_API_URL
         self.__base_app_url = DEFAULT_PANDADOC_BASE_APP_URL
@@ -27,19 +32,19 @@ class PandaWorkspace:
     @property
     def documents(self):
         class __PandaDocument(PandaDocumentAbstract):
-            _pandadoc = self
+            _pandaworkspace = self
         return __PandaDocument
 
     @property
     def templates(self):
         class __PandaTemplate(PandaTemplateAbstract):
-            _pandadoc = self
+            _pandaworkspace = self
         return __PandaTemplate
 
     @property
     def tempate_folders(self):
         class __PandaTemplatesFolder(PandaFolder):
-            _pandadoc = self
+            _pandaworkspace = self
 
             @classmethod
             def get_folder_type(cls):
@@ -49,7 +54,7 @@ class PandaWorkspace:
     @property
     def document_folders(self):
         class __PandaDocumentsFolder(PandaFolder):
-            _pandadoc = self
+            _pandaworkspace = self
 
             @classmethod
             def get_folder_type(cls):
@@ -126,50 +131,61 @@ class PandaWorkspace:
         return filepath
 
     @staticmethod
-    def debug_response(response, debug=False):
+    def debug_response(response):
+        print(response.status_code)
+        print(response.text)
+
+    @classmethod
+    def check_response(cls, response, debug=False):
         if debug:
-            print(response.status_code)
-            print(response.text)
+            cls.debug_response(response)
+        if response.status_code not in API_RESPONSE_SUCCESSFUL_STATUS_CODES:
+            raise ApiException(response.text)
 
     def get(self, uri, data=None, debug=False, **kwargs):
+        # print("=================> ", "GET uri: /", uri)
         url = self.get_api_url(uri)
         if data is None:
             data = {}
         with self.__request_limit_manager():
             response = requests.get(url, params=data, headers=self.headers, **kwargs)
-        self.__class__.debug_response(response, debug)
+        self.__class__.check_response(response, debug)
         return response
 
-    def post(self, uri, data=None, debug=False):
+    def post(self, uri, data=None, debug=True):
+        # print("=================> ", "POST uri: /", uri)
         url = self.get_api_url(uri)
         if data is None:
             data = {}
         with self.__request_limit_manager():
             response = requests.post(url, json=data, headers=self.headers)
-        self.__class__.debug_response(response, debug)
+        self.__class__.check_response(response, debug)
         return response
 
     def put(self, uri, data=None, debug=False):
+        # print("=================> ", "PUT uri: /", uri)
         url = self.get_api_url(uri)
         if data is None:
             data = {}
         with self.__request_limit_manager():
             response = requests.put(url, json=data, headers=self.headers)
-        self.__class__.debug_response(response, debug)
+        self.__class__.check_response(response, debug)
         return response
 
     def delete(self, uri, data=None, debug=False):
+        # print("=================> ", "DELETE uri: /", uri)
         url = self.get_api_url(uri)
         if data is None:
             data = {}
         with self.__request_limit_manager():
             response = requests.delete(url, data=data, headers=self.headers)
-        self.__class__.debug_response(response, debug)
+        self.__class__.check_response(response, debug)
         return response
 
-    def download(self, uri, filename=None, download_folder=None) -> str:
+    def download(self, uri, filename=None, download_folder=None, debug=False) -> str:
         with self.__request_limit_manager(max_attempts=5, retry_delay=60, for_download=True):
-            response = self.get(uri)
+            response = self.get(uri, debug=False)
+        self.__class__.check_response(response, debug)
         if download_folder is None:
             download_folder = self.download_folder
         if filename is None:
@@ -180,7 +196,7 @@ class PandaWorkspace:
             f.write(response.content)
         return filepath
 
-    def download_large(self, uri, filename=None, download_folder=None) -> str:
+    def download_large(self, uri, filename=None, download_folder=None, debug=False) -> str:
         if download_folder is None:
             download_folder = self.download_folder
         if filename is None:
@@ -189,6 +205,7 @@ class PandaWorkspace:
             filepath = os.path.join(download_folder, filename)
         with self.__request_limit_manager(max_attempts=5, retry_delay=60, for_download=True):
             with self.get(uri, debug=False, stream=True) as response:
+                self.__class__.check_response(response, debug)
                 response.raise_for_status()
                 with open(filepath, 'wb') as f:
                     for chunk in response.iter_content(chunk_size=8192):

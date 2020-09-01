@@ -2,7 +2,7 @@ from abc import ABC
 from enum import Enum
 from typing import List, Dict
 
-from .panda_exceptions import ApiError
+from .panda_exceptions import ApiException
 from .pandarecipient import Pandarecipient
 
 
@@ -15,7 +15,7 @@ class PandaDocumentDoesNotExist(Exception):
 
 
 class PandaDocumentAbstract(ABC):
-    _pandadoc = None
+    _pandaworkspace = None
 
     def __init__(self, id_: str = None):
         """
@@ -92,9 +92,9 @@ class PandaDocumentAbstract(ABC):
         if folder_uuid:
             data['folder_uuid'] = folder_uuid
 
-        response = cls._pandadoc.get('documents', data=data)
+        response = cls._pandaworkspace.get('documents', data=data)
         if response.status_code != 200:
-            raise ApiError(response.text)
+            raise ApiException(response.text)
         results = response.json().get('results')
         return results
 
@@ -104,7 +104,8 @@ class PandaDocumentAbstract(ABC):
             template_uuid: str,
             recipients: List[Pandarecipient],
             name: str = 'Sample Template',
-            folder_uuid: str = ''
+            folder_uuid: str = '',
+            tokens: List[Dict] = None
     ):
         """
         :param pandadoc:
@@ -121,8 +122,11 @@ class PandaDocumentAbstract(ABC):
         }
         if folder_uuid:
             data['folder_uuid'] = folder_uuid
+        if tokens:
+            data['tokens'] = tokens
 
-        response = cls._pandadoc.post('documents', data=data)
+
+        response = cls._pandaworkspace.post('documents', data=data)
         response_json = response.json()
         document_id = response_json.get('id', None)
         print("document_id:", document_id)
@@ -148,22 +152,22 @@ class PandaDocumentAbstract(ABC):
             "subject": subject,
             "silent": silent,
         }
-        response = self.__class__._pandadoc.post(
+        response = self.__class__._pandaworkspace.post(
             'documents/{document_id}/send'.format(document_id=self.id),
             data=data,
         )
         return response.json()
 
     def status(self) -> Dict:
-        response = self.__class__._pandadoc.get('documents/{document_id}'.format(document_id=self.id))
+        response = self.__class__._pandaworkspace.get('documents/{document_id}'.format(document_id=self.id))
         return response.json()
 
     def details(self) -> Dict:
-        response = self.__class__._pandadoc.get('documents/{document_id}/details'.format(document_id=self.id))
+        response = self.__class__._pandaworkspace.get('documents/{document_id}/details'.format(document_id=self.id))
         return response.json()
 
     def delete(self) -> int:
-        response = self.__class__._pandadoc.delete('documents/{document_id}'.format(document_id=self.id))
+        response = self.__class__._pandaworkspace.delete('documents/{document_id}'.format(document_id=self.id))
         return response.status_code
 
     def share(self, recipient: Pandarecipient, lifetime: int = 3600):
@@ -176,32 +180,32 @@ class PandaDocumentAbstract(ABC):
             "recipient": recipient.email,
             "lifetime": lifetime,
         }
-        response = self.__class__._pandadoc.post(
+        response = self.__class__._pandaworkspace.post(
             'documents/{document_id}/session'.format(document_id=self.id),
             data=data,
         )
         link_id = response.json().get('id', None)
         if link_id:
-            return self.__class__._pandadoc.get_app_url(uri='s/{link_id}'.format(link_id=link_id))
+            return self.__class__._pandaworkspace.get_app_url(uri='s/{link_id}'.format(link_id=link_id))
         else:
-            raise ApiError(response)
+            raise ApiException(response)
 
     def download(self, filename=None, download_folder=None) -> str:
-        return self.__class__._pandadoc.download(
+        return self.__class__._pandaworkspace.download(
             'documents/{document_id}/download'.format(document_id=self.id),
             filename,
             download_folder,
         )
 
     def download_protected(self, filename=None, download_folder=None) -> str:
-        return self.__class__._pandadoc.download(
+        return self.__class__._pandaworkspace.download(
             'documents/{document_id}/download-protected'.format(document_id=self.id),
             filename,
             download_folder,
         )
 
     def download_large(self, filename=None, download_folder=None) -> str:
-        return self.__class__._pandadoc.download_large(
+        return self.__class__._pandaworkspace.download_large(
             'documents/{document_id}/download'.format(document_id=self.id),
             filename,
             download_folder

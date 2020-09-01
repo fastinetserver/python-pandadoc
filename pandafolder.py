@@ -1,7 +1,7 @@
 from typing import List, Dict
 from abc import ABC, abstractmethod
 
-from .panda_exceptions import ApiError
+from .panda_exceptions import ApiException
 
 
 class FolderUuidRequired(Exception):
@@ -9,7 +9,7 @@ class FolderUuidRequired(Exception):
 
 
 class PandaFolder(ABC):
-    _pandadoc = None
+    _pandaworkspace = None
 
     def __init__(self, uuid: str = None, name: str = None, date_created: str = None):
         """
@@ -60,11 +60,11 @@ class PandaFolder(ABC):
         if page:
             data['page'] = page
 
-        response = cls._pandadoc.get('{folder_type}/folders'.format(
+        response = cls._pandaworkspace.get('{folder_type}/folders'.format(
             folder_type=cls.get_folder_type(),
         ), data=data)
         if response.status_code != 200:
-            raise ApiError(response.text)
+            raise ApiException(response.text)
         results = response.json().get('results')
         return results
 
@@ -87,7 +87,7 @@ class PandaFolder(ABC):
         if parent_uuid:
             data['parent_uuid'] = parent_uuid
 
-        response = cls._pandadoc.post('{folder_type}/folders'.format(folder_type=cls.get_folder_type()), data=data)
+        response = cls._pandaworkspace.post('{folder_type}/folders'.format(folder_type=cls.get_folder_type()), data=data)
         response_json = response.json()
         folder_uuid = response_json.get('uuid', None)
         print("folder_uuid:", folder_uuid)
@@ -102,7 +102,7 @@ class PandaFolder(ABC):
         data = {
             'name': new_name,
         }
-        response = self.__class__._pandadoc.put('{folder_type}/folders/{folder_uuid}'.format(
+        response = self.__class__._pandaworkspace.put('{folder_type}/folders/{folder_uuid}'.format(
             folder_type=self.__class__.get_folder_type(),
             folder_uuid=self.uuid,
         ), data=data)

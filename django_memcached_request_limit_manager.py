@@ -3,7 +3,7 @@ from time import sleep
 
 from django.core.cache import cache
 
-from main.pandadoc.request_limit_manager import AbstractRequestLimitManager, RequestLimitReachedException
+from .request_limit_manager import AbstractRequestLimitManager, RequestLimitReachedException
 
 PANDADOC_REQUESTS_PER_MINUTE_QUOTA = 100
 PANDADOC_REQUESTS_PER_MINUTE_DOWNLOAD_QUOTA = 20

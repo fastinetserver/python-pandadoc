@@ -2,6 +2,8 @@ import os
 import re
 
 import pytest
+
+from .sleep_request_limit_manager import SleepRequestLimitManager
 from .pandaworkspace import PandaWorkspace
 from .pandarecipient import Pandarecipient
 
@@ -14,7 +16,7 @@ TEST_TEMPLATE_DELETE_UUID = os.environ.get('TEST_TEMPLATE_DELETE_UUID', 'ZYxyzey
 
 @pytest.fixture
 def pandadoc():
-    return PandaWorkspace()
+    return PandaWorkspace(request_limit_manager=SleepRequestLimitManager)
 
 
 @pytest.fixture
@@ -36,11 +38,28 @@ def recipients():
 
 @pytest.fixture
 def a_pandadocument(pandadoc, recipients):
+    tokens = [
+        {
+            'name': 'Favorite.Pet',
+            'value': 'Panda',
+        },
+        {
+            'name': 'Best.Friend',
+            'value': 'David Schwimmer',
+        },
+    ]
     return pandadoc.documents.create(
         template_uuid=TEST_TEMPLATE_UUID,
         recipients=recipients,
         name="Test Document",
+        tokens=tokens
     )
+
+
+def test_document_create(a_pandadocument):
+    assert type(a_pandadocument.id) == str
+    assert len(a_pandadocument.id) > 10
+    assert a_pandadocument.delete() == 204
 
 
 def test_document_create_in_folder(pandadoc, recipients):
@@ -53,12 +72,6 @@ def test_document_create_in_folder(pandadoc, recipients):
     assert type(document.id) == str
     assert len(document.id) > 10
     assert document.delete() == 204
-
-
-def test_document_create(a_pandadocument):
-    assert type(a_pandadocument.id) == str
-    assert len(a_pandadocument.id) > 10
-    assert a_pandadocument.delete() == 204
 
 
 def test_document_send(a_pandadocument):
@@ -83,13 +96,11 @@ def test_document_details(a_pandadocument):
 
 
 def test_document_share(a_pandadocument, recipients):
-    result = a_pandadocument.send(
+    a_pandadocument.send(
         message='TEST: Sending through PandaDoc API. If you see it then the test works.',
         subject='TEST: Sending through PandaDoc API.',
         silent=False,
     )
-    assert result.get('status', None) == 'document.sent'
-    assert result.get('id', None) == a_pandadocument.id
     share_url = a_pandadocument.share(recipient=recipients[0], lifetime=72000)
     print("Share Url:", share_url)
     assert re.match('https://app.pandadoc.com/s/[\d\w]+', share_url)
@@ -106,6 +117,17 @@ def test_document_download(a_pandadocument):
     assert result.get('id', None) == a_pandadocument.id
     filepath = a_pandadocument.download()
     print("Downloaded file:", filepath)
+    assert a_pandadocument.delete() == 204
+
+
+def test_document_download_large(a_pandadocument):
+    result = a_pandadocument.send(
+        message='TEST: Sending through PandaDoc API. If you see it then the test works.',
+        subject='TEST: Sending through PandaDoc API.',
+        silent=False,
+    )
+    assert result.get('status', None) == 'document.sent'
+    assert result.get('id', None) == a_pandadocument.id
     filepath = a_pandadocument.download_large()
     print("Downloaded file:", filepath)
     assert a_pandadocument.delete() == 204
