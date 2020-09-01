@@ -1,3 +1,14 @@
+"""pandadocument.py implements a Limit Manager for Django Application using Memcached
+ More about limits can be found here https://developers.pandadoc.com/reference#limits"""
+
+__author__ = "Kostyantyn Ovechko"
+__copyright__ = "Copyright 2020, Zxscript"
+__license__ = "MIT"
+__version__ = "0.0.1"
+__email__ = "kos@zxscript.com"
+__status__ = "Production"
+
+
 import random
 from time import sleep
 

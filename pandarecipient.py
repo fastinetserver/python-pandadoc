@@ -1,3 +1,13 @@
+"""pandarecipient.py implements Recipients as per https://developers.pandadoc.com/reference#new-document"""
+
+__author__ = "Kostyantyn Ovechko"
+__copyright__ = "Copyright 2020, Zxscript"
+__license__ = "MIT"
+__version__ = "0.0.1"
+__email__ = "kos@zxscript.com"
+__status__ = "Production"
+
+
 class Pandarecipient:
     def __init__(self, email: str, first_name: str, last_name: str, role: str):
         self.__email = email

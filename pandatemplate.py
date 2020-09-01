@@ -1,3 +1,13 @@
+"""pandatemplate.py implements API Wrapper for Templates https://developers.pandadoc.com/reference#list-templates"""
+
+__author__ = "Kostyantyn Ovechko"
+__copyright__ = "Copyright 2020, Zxscript"
+__license__ = "MIT"
+__version__ = "0.0.1"
+__email__ = "kos@zxscript.com"
+__status__ = "Production"
+
+
 from abc import ABC
 from typing import List, Dict
 
