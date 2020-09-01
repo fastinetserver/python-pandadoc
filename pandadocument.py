@@ -108,11 +108,11 @@ class PandaDocumentAbstract(ABC):
             tokens: List[Dict] = None
     ):
         """
-        :param pandadoc:
         :param folder_uuid:
         :param recipients:
         :param name:
         :param template_uuid: e.g.: "Cu7KZisX2Hrnug6FgrYX4d"
+        :param tokens:
         :return:
         """
         data = {
@@ -124,7 +124,6 @@ class PandaDocumentAbstract(ABC):
             data['folder_uuid'] = folder_uuid
         if tokens:
             data['tokens'] = tokens
-
 
         response = cls._pandaworkspace.post('documents', data=data)
         response_json = response.json()
