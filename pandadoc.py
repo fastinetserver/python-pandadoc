@@ -3,6 +3,7 @@ import string
 import random
 import requests
 
+from .request_limit_manager import NoLimitRequestLimitManager
 from .pandadocument import PandaDocumentAbstract
 from .pandafolder import PandaFolder
 from .pandatemplate import PandaTemplateAbstract
@@ -14,14 +15,14 @@ DEFAULT_PANDADOC_DOWNLOAD_FOLDER = os.environ.get('DEFAULT_PANDADOC_DOWNLOAD_FOL
 DEFAULT_RANDOM_FILENAME_LENGTH = int(os.environ.get('DEFAULT_RANDOM_FILENAME_LENGTH', '20'))
 
 
-
 class PandaDoc:
-    def __init__(self):
+    def __init__(self, request_limit_manager=NoLimitRequestLimitManager):
         self.__api_key = DEFAULT_PANDADOC_API_KEY
         self.__base_api_url = DEFAULT_PANDADOC_BASE_API_URL
         self.__base_app_url = DEFAULT_PANDADOC_BASE_APP_URL
         self.__download_folder = DEFAULT_PANDADOC_DOWNLOAD_FOLDER
         self.__random_filename_length = DEFAULT_RANDOM_FILENAME_LENGTH
+        self.__request_limit_manager = request_limit_manager
 
     @property
     def documents(self):
@@ -130,11 +131,21 @@ class PandaDoc:
             print(response.status_code)
             print(response.text)
 
+    def get(self, uri, data=None, debug=False, **kwargs):
+        url = self.get_api_url(uri)
+        if data is None:
+            data = {}
+        with self.__request_limit_manager():
+            response = requests.get(url, params=data, headers=self.headers, **kwargs)
+        self.__class__.debug_response(response, debug)
+        return response
+
     def post(self, uri, data=None, debug=False):
         url = self.get_api_url(uri)
         if data is None:
             data = {}
-        response = requests.post(url, json=data, headers=self.headers)
+        with self.__request_limit_manager():
+            response = requests.post(url, json=data, headers=self.headers)
         self.__class__.debug_response(response, debug)
         return response
 
@@ -142,15 +153,8 @@ class PandaDoc:
         url = self.get_api_url(uri)
         if data is None:
             data = {}
-        response = requests.put(url, json=data, headers=self.headers)
-        self.__class__.debug_response(response, debug)
-        return response
-
-    def get(self, uri, data=None, debug=False, **kwargs):
-        url = self.get_api_url(uri)
-        if data is None:
-            data = {}
-        response = requests.get(url, params=data, headers=self.headers, **kwargs)
+        with self.__request_limit_manager():
+            response = requests.put(url, json=data, headers=self.headers)
         self.__class__.debug_response(response, debug)
         return response
 
@@ -158,12 +162,14 @@ class PandaDoc:
         url = self.get_api_url(uri)
         if data is None:
             data = {}
-        response = requests.delete(url, data=data, headers=self.headers)
+        with self.__request_limit_manager():
+            response = requests.delete(url, data=data, headers=self.headers)
         self.__class__.debug_response(response, debug)
         return response
 
     def download(self, uri, filename=None, download_folder=None) -> str:
-        response = self.get(uri)
+        with self.__request_limit_manager(max_attempts=5, retry_delay=60, for_download=True):
+            response = self.get(uri)
         if download_folder is None:
             download_folder = self.download_folder
         if filename is None:
@@ -181,9 +187,10 @@ class PandaDoc:
             filepath = self.random_filepath(download_folder)
         else:
             filepath = os.path.join(download_folder, filename)
-        with self.get(uri, debug=False, stream=True) as response:
-            response.raise_for_status()
-            with open(filepath, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
+        with self.__request_limit_manager(max_attempts=5, retry_delay=60, for_download=True):
+            with self.get(uri, debug=False, stream=True) as response:
+                response.raise_for_status()
+                with open(filepath, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
         return filepath
